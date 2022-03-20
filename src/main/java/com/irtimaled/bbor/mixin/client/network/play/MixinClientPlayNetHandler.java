@@ -29,8 +29,8 @@ public class MixinClientPlayNetHandler {
     
     @Inject(method = "onGameJoin", at = @At("RETURN"))
     private void onGameJoined(GameJoinS2CPacket packet, CallbackInfo ci) {
-        assert this.client.world != null;
-        assert this.client.player != null;
-        CommonInterop.loadWorldStructures(this.client.world);
+        if (this.client.world != null) {
+            CommonInterop.loadWorldStructures(this.client.world);
+        }
     }
 }
