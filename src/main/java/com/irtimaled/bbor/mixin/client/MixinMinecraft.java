@@ -17,9 +17,9 @@ public abstract class MixinMinecraft {
         new ClientProxy().init();
     }
 
-    @Inject(method = "joinWorld", at = @At("RETURN"))
-    private void onJoinWorld(ClientWorld world, CallbackInfo ci) {
-        CommonInterop.loadWorldStructures(world);
-    }
+//    @Inject(method = "joinWorld", at = @At("RETURN"))
+//    private void onJoinWorld(ClientWorld world, CallbackInfo ci) {
+//        CommonInterop.loadWorldStructures(world);
+//    }
 
 }
