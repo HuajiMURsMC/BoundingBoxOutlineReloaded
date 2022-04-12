@@ -30,14 +30,15 @@ import net.minecraft.world.World;
 import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Supplier;
 
 public class CommonInterop {
+    private static final String[] legacyWorldStructures = {
+        "jungle_pyramid", "desert_pyramid", "swamp_hut", "monument", "shipwreck", "ocean_ruin", "buried_treasure", "stronghold", "mineshaft",
+        "fortress","endcity", "mansion", "igloo", "pillager_outpost", "village", "nether_fossil", "bastion_remnant", "ruined_portal"
+    };
+
     public static void chunkLoaded(WorldChunk chunk) {
         DimensionId dimensionId = DimensionId.from(chunk.getWorld().getRegistryKey());
         Map<String, StructureStart> structures = new HashMap<>();
@@ -57,10 +58,26 @@ public class CommonInterop {
     }
 
     public static void loadWorldStructures(World world) {
-        final Registry<ConfiguredStructureFeature<?, ?>> structureFeatureRegistry = world.getRegistryManager().get(Registry.CONFIGURED_STRUCTURE_FEATURE_KEY);
+        final Registry<ConfiguredStructureFeature<?, ?>> structureFeatureRegistry;
+        try {
+            structureFeatureRegistry = world.getRegistryManager().get(Registry.CONFIGURED_STRUCTURE_FEATURE_KEY);
+        } catch (IllegalStateException e) {
+            loadWorldStructuresLegacy(world);
+            return;
+        }
         System.out.println("Registring structures: " + Arrays.toString(structureFeatureRegistry.getEntrySet().stream().map(entry -> entry.getKey().getValue().toString()).distinct().toArray(String[]::new)));
         for (var entry : structureFeatureRegistry.getEntrySet()) {
             final Identifier value = entry.getKey().getValue();
+            final BoundingBoxType boundingBoxType = BoundingBoxType.register("structure:" + value);
+            StructureProcessor.registerSupportedStructure(boundingBoxType);
+            StructureProcessor.supportedStructureIds.add(value.toString());
+            BoundingBoxTypeHelper.registerType(boundingBoxType, ConfigManager.structureShouldRender(value.toString()), ConfigManager.structureColor(value.toString()));
+        }
+    }
+
+    private static void loadWorldStructuresLegacy(World world) {
+        for (var path : legacyWorldStructures) {
+            final Identifier value = new Identifier("minecraft", path);
             final BoundingBoxType boundingBoxType = BoundingBoxType.register("structure:" + value);
             StructureProcessor.registerSupportedStructure(boundingBoxType);
             StructureProcessor.supportedStructureIds.add(value.toString());
